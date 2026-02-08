@@ -2,35 +2,49 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { LogIn, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
+import { LogIn, ShieldCheck, AlertCircle, Loader2, Eye, EyeOff, Mail, Lock } from 'lucide-react';
 
 const Login: React.FC = () => {
   const { user, login, loading, logout } = useAuth();
   const navigate = useNavigate();
+  
+  // Form State
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [accessDenied, setAccessDenied] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       if (user.isAdmin) {
         navigate('/admin');
       } else {
-        setAccessDenied(true);
-        // We log them out automatically if they aren't an admin to keep the state clean
+        setErrorMsg('Access Denied: This account is not authorized.');
         setTimeout(() => {
           logout();
+          setErrorMsg(null);
         }, 3000);
       }
     }
   }, [user, navigate, logout]);
 
-  const handleLogin = async () => {
-    setAccessDenied(false);
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
     setIsLoggingIn(true);
+    
     try {
-      await login();
-    } catch (error) {
+      await login(email, password);
+    } catch (error: any) {
       console.error("Login failed", error);
+      if (error.code === 'auth/invalid-credential') {
+        setErrorMsg('Invalid email or password. Please try again.');
+      } else if (error.code === 'auth/user-not-found') {
+        setErrorMsg('No admin account found with this email.');
+      } else {
+        setErrorMsg('An error occurred during sign-in.');
+      }
     } finally {
       setIsLoggingIn(false);
     }
@@ -40,48 +54,85 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-20 bg-slate-950">
-      <div className="glass p-10 md:p-16 rounded-[2.5rem] max-w-md w-full text-center relative overflow-hidden">
+      <div className="glass p-10 md:p-14 rounded-[2.5rem] max-w-md w-full relative overflow-hidden">
         {/* Decorative background elements */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 blur-[80px]"></div>
         <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/10 blur-[80px]"></div>
         
-        <div className="w-20 h-20 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-8 relative">
-          <ShieldCheck size={40} />
-          {isLoggingIn && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50 rounded-2xl">
-              <Loader2 className="animate-spin text-blue-400" size={32} />
-            </div>
-          )}
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6 relative">
+            <ShieldCheck size={32} />
+          </div>
+          <h1 className="text-3xl font-bold mb-2">Admin Access</h1>
+          <p className="text-slate-400 text-sm">
+            Authorized access for <span className="text-blue-400 font-medium">rowboxsiw@gmail.com</span>
+          </p>
         </div>
-        
-        <h1 className="text-3xl font-bold mb-4">Admin Access</h1>
-        <p className="text-slate-400 mb-10 leading-relaxed">
-          Please sign in with your authorized Google account (<span className="text-blue-400">rowboxsiw@gmail.com</span>) to access the dashboard.
-        </p>
 
-        {accessDenied && (
+        {errorMsg && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl flex items-center space-x-3 text-red-400 text-sm animate-in fade-in slide-in-from-top-2">
             <AlertCircle size={18} className="shrink-0" />
-            <p className="text-left">Access Denied: This account is not authorized to access the admin panel.</p>
+            <p className="text-left">{errorMsg}</p>
           </div>
         )}
 
-        <button 
-          onClick={handleLogin}
-          disabled={isLoggingIn}
-          className="w-full flex items-center justify-center space-x-3 bg-white text-slate-950 font-bold py-4 rounded-xl hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl shadow-white/5"
-        >
-          {isLoggingIn ? (
-            <Loader2 className="animate-spin" size={20} />
-          ) : (
-            <LogIn size={20} />
-          )}
-          <span>{isLoggingIn ? 'Authenticating...' : 'Sign in with Google'}</span>
-        </button>
+        <form onSubmit={handleFormSubmit} className="space-y-5">
+          {/* Email Field */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Email Address</label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@indiaaurcode.com"
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl pl-12 pr-4 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+              />
+            </div>
+          </div>
 
-        <div className="mt-10 pt-8 border-t border-slate-800">
-           <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">
-            IndiaAurCode Security Protocol
+          {/* Password Field */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                required
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl pl-12 pr-12 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <button 
+            type="submit"
+            disabled={isLoggingIn}
+            className="w-full mt-4 flex items-center justify-center space-x-3 bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl shadow-blue-500/20 active:scale-[0.98]"
+          >
+            {isLoggingIn ? (
+              <Loader2 className="animate-spin" size={20} />
+            ) : (
+              <LogIn size={20} />
+            )}
+            <span>{isLoggingIn ? 'Verifying...' : 'Sign In to Dashboard'}</span>
+          </button>
+        </form>
+
+        <div className="mt-10 pt-8 border-t border-slate-800 text-center">
+           <p className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">
+            IndiaAurCode Security Protocol v2.1
           </p>
         </div>
       </div>

@@ -1,14 +1,14 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
-import { auth, googleProvider } from '../services/firebase';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { auth, signInWithEmailAndPassword } from '../services/firebase';
 import { UserProfile } from '../types';
 import { ADMIN_EMAIL } from '../constants.tsx';
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
-  login: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser({
           uid: firebaseUser.uid,
           email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
+          displayName: firebaseUser.displayName || 'Admin',
           photoURL: firebaseUser.photoURL,
           isAdmin: firebaseUser.email === ADMIN_EMAIL,
         });
@@ -37,8 +37,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  const login = async () => {
-    await signInWithPopup(auth, googleProvider);
+  const login = async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const logout = async () => {

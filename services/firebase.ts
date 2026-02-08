@@ -1,13 +1,11 @@
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFirestore, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 /**
  * PRODUCTION READY CONFIGURATION
- * When deploying to Vercel, add these variables in the Vercel Dashboard:
- * Settings -> Environment Variables
  */
 const firebaseConfig = {
   apiKey: process.env.VITE_FIREBASE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyDummyKey_123456789",
@@ -22,7 +20,9 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const googleProvider = new GoogleAuthProvider();
+
+// Exporting specific auth method
+export { signInWithEmailAndPassword };
 
 export const firestoreService = {
   getProjects: async () => {
