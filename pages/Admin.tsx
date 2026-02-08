@@ -23,7 +23,9 @@ const Admin: React.FC = () => {
   }, [user, activeTab]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-white">Verifying credentials...</div>;
-  if (!user?.isAdmin) return <Navigate to="/" />;
+  
+  // If not logged in or not admin, go to login page
+  if (!user?.isAdmin) return <Navigate to="/login" />;
 
   const tabs = [
     { id: 'projects', label: 'Projects', icon: Layout },
@@ -38,7 +40,7 @@ const Admin: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 pb-10 border-b border-slate-800">
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-blue-500">
-              <img src={user.photoURL || ''} alt="Admin" className="w-full h-full object-cover" />
+              <img src={user.photoURL || 'https://picsum.photos/seed/admin/100/100'} alt="Admin" className="w-full h-full object-cover" />
             </div>
             <div>
               <h1 className="text-2xl font-bold flex items-center">

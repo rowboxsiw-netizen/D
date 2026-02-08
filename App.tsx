@@ -1,6 +1,6 @@
 
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import { AuthProvider } from './hooks/useAuth';
 
@@ -12,6 +12,7 @@ const Blog = lazy(() => import('./pages/Blog'));
 const About = lazy(() => import('./pages/About'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Admin = lazy(() => import('./pages/Admin'));
+const Login = lazy(() => import('./pages/Login'));
 
 const App: React.FC = () => {
   return (
@@ -36,6 +37,7 @@ const App: React.FC = () => {
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/login" element={<Login />} />
               </Routes>
             </Suspense>
           </main>
@@ -51,6 +53,13 @@ const App: React.FC = () => {
               <p className="text-slate-500 max-w-sm mx-auto mb-8">
                 Crafting digital excellence through advanced engineering and creative design.
               </p>
+              
+              <div className="flex justify-center space-x-6 mb-8 text-sm font-medium">
+                <Link to="/login" className="text-slate-600 hover:text-blue-400 transition-colors">Staff Login</Link>
+                <Link to="/contact" className="text-slate-600 hover:text-blue-400 transition-colors">Support</Link>
+                <a href="https://github.com/indiaaurcode" target="_blank" rel="noreferrer" className="text-slate-600 hover:text-blue-400 transition-colors">GitHub</a>
+              </div>
+
               <div className="text-sm text-slate-600">
                 &copy; {new Date().getFullYear()} IndiaAurCode. All rights reserved.
               </div>
