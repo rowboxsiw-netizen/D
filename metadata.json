@@ -1,0 +1,8 @@
+{
+  "name": "IndiaAurCode Portfolio",
+  "description": "A professional, high-performance personal portfolio and link-sharing website for showcasing projects, tutorials, and technologies.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
