@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LogIn, ShieldCheck, AlertCircle, Loader2, Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { ADMIN_EMAIL } from '../constants.tsx';
 
 const Login: React.FC = () => {
   const { user, login, loading, logout } = useAuth();
@@ -17,14 +18,17 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      if (user.isAdmin) {
+      // Check if the user's email is the authorized admin email
+      if (user.email === ADMIN_EMAIL) {
         navigate('/admin');
       } else {
-        setErrorMsg('Access Denied: This account is not authorized.');
-        setTimeout(() => {
+        setErrorMsg(`Access Denied: ${user.email} is not authorized.`);
+        // Immediately log out unauthorized users
+        const timer = setTimeout(() => {
           logout();
           setErrorMsg(null);
         }, 3000);
+        return () => clearTimeout(timer);
       }
     }
   }, [user, navigate, logout]);
@@ -36,25 +40,31 @@ const Login: React.FC = () => {
     
     try {
       await login(email, password);
+      // Logic inside useEffect handles the redirect if email matches
     } catch (error: any) {
       console.error("Login failed", error);
-      if (error.code === 'auth/invalid-credential') {
-        setErrorMsg('Invalid email or password. Please try again.');
-      } else if (error.code === 'auth/user-not-found') {
-        setErrorMsg('No admin account found with this email.');
+      // Handle Firebase specific authentication errors
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        setErrorMsg('Invalid email or password. Please check your credentials.');
+      } else if (error.code === 'auth/too-many-requests') {
+        setErrorMsg('Too many failed attempts. Please try again later.');
       } else {
-        setErrorMsg('An error occurred during sign-in.');
+        setErrorMsg('An unexpected error occurred. Please try again.');
       }
     } finally {
       setIsLoggingIn(false);
     }
   };
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-950">
+      <Loader2 className="animate-spin text-blue-500" size={40} />
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-20 bg-slate-950">
-      <div className="glass p-10 md:p-14 rounded-[2.5rem] max-w-md w-full relative overflow-hidden">
+      <div className="glass p-10 md:p-14 rounded-[2.5rem] max-w-md w-full relative overflow-hidden border border-white/5">
         {/* Decorative background elements */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 blur-[80px]"></div>
         <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/10 blur-[80px]"></div>
@@ -63,23 +73,23 @@ const Login: React.FC = () => {
           <div className="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6 relative">
             <ShieldCheck size={32} />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Admin Access</h1>
+          <h1 className="text-3xl font-bold mb-2">Admin Panel</h1>
           <p className="text-slate-400 text-sm">
-            Authorized access for <span className="text-blue-400 font-medium">rowboxsiw@gmail.com</span>
+            Please enter your credentials to manage IndiaAurCode
           </p>
         </div>
 
         {errorMsg && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl flex items-center space-x-3 text-red-400 text-sm animate-in fade-in slide-in-from-top-2">
             <AlertCircle size={18} className="shrink-0" />
-            <p className="text-left">{errorMsg}</p>
+            <p className="text-left font-medium">{errorMsg}</p>
           </div>
         )}
 
         <form onSubmit={handleFormSubmit} className="space-y-5">
           {/* Email Field */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Email Address</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Admin Email</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
               <input 
@@ -87,7 +97,7 @@ const Login: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@indiaaurcode.com"
+                placeholder="rowboxsiw@gmail.com"
                 className="w-full bg-slate-900/50 border border-slate-700 rounded-xl pl-12 pr-4 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
               />
             </div>
@@ -126,13 +136,13 @@ const Login: React.FC = () => {
             ) : (
               <LogIn size={20} />
             )}
-            <span>{isLoggingIn ? 'Verifying...' : 'Sign In to Dashboard'}</span>
+            <span>{isLoggingIn ? 'Authenticating...' : 'Sign In'}</span>
           </button>
         </form>
 
         <div className="mt-10 pt-8 border-t border-slate-800 text-center">
            <p className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">
-            IndiaAurCode Security Protocol v2.1
+            IndiaAurCode Security Protocol v2.2
           </p>
         </div>
       </div>
